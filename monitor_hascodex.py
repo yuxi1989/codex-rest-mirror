@@ -192,6 +192,7 @@ def build_markdown(payload: dict, old_signature: dict, new_signature: dict) -> s
             [
                 "",
                 f"**{markdown_color('最新追踪帖子', COLOR_INFO)}**",
+                f"> 帖子时间: {markdown_color(timestamp_to_text(latest.get('checkedAt')), COLOR_COMMENT)}",
                 f"> 判定: **{markdown_color(verdict_label(latest_verdict), verdict_color(latest_verdict))}**，置信度: {markdown_color(str(latest.get('confidence', '-')), COLOR_COMMENT)}",
                 f"> 原文: {latest.get('tweetText', '-')}",
                 f"> 译文: {markdown_color(latest.get('tweetTextZh', '-'), COLOR_INFO)}",
@@ -205,6 +206,7 @@ def build_markdown(payload: dict, old_signature: dict, new_signature: dict) -> s
             [
                 "",
                 f"**{markdown_color('最近一次确认重置', COLOR_INFO)}**",
+                f"> 帖子时间: {markdown_color(timestamp_to_text(last_reset.get('checkedAt')), COLOR_COMMENT)}",
                 f"> 判定: **{markdown_color(verdict_label(last_reset_verdict), verdict_color(last_reset_verdict))}**，置信度: {markdown_color(str(last_reset.get('confidence', '-')), COLOR_COMMENT)}",
                 f"> 原文: {last_reset.get('tweetText', '-')}",
                 f"> 译文: {markdown_color(last_reset.get('tweetTextZh', '-'), COLOR_INFO)}",
@@ -241,23 +243,25 @@ def build_news_articles(payload: dict, old_signature: dict, image_url: str) -> l
     ]
 
     if latest:
+        latest_description = truncate(latest.get("tweetTextZh") if latest.get("tweetTextZh") != "-" else latest.get("tweetText"), 72)
         articles.append(
             {
                 "title": f"最新追踪: {verdict_label(latest.get('verdict'))}",
-                "description": truncate(latest.get("tweetTextZh") if latest.get("tweetTextZh") != "-" else latest.get("tweetText"), 96),
+                "description": f"{timestamp_to_text(latest.get('checkedAt'))}\n{latest_description}",
                 "url": latest.get("tweetUrl") or SITE_URL,
                 "picurl": image_url,
             }
         )
 
     if last_reset and last_reset.get("tweetId") != latest.get("tweetId"):
+        last_reset_description = truncate(
+            last_reset.get("tweetTextZh") if last_reset.get("tweetTextZh") != "-" else last_reset.get("tweetText"),
+            72,
+        )
         articles.append(
             {
                 "title": f"最近确认重置: {verdict_label(last_reset.get('verdict'))}",
-                "description": truncate(
-                    last_reset.get("tweetTextZh") if last_reset.get("tweetTextZh") != "-" else last_reset.get("tweetText"),
-                    96,
-                ),
+                "description": f"{timestamp_to_text(last_reset.get('checkedAt'))}\n{last_reset_description}",
                 "url": last_reset.get("tweetUrl") or SITE_URL,
                 "picurl": image_url,
             }
@@ -284,6 +288,7 @@ def build_plain_summary(payload: dict, old_signature: dict) -> str:
             [
                 "",
                 "最新追踪帖子",
+                f"帖子时间: {timestamp_to_text(latest.get('checkedAt'))}",
                 f"判定: {verdict_label(latest.get('verdict'))}，置信度: {latest.get('confidence', '-')}",
                 f"原文: {latest.get('tweetText', '-')}",
                 f"译文: {latest.get('tweetTextZh', '-')}",
@@ -295,6 +300,7 @@ def build_plain_summary(payload: dict, old_signature: dict) -> str:
             [
                 "",
                 "最近一次确认重置",
+                f"帖子时间: {timestamp_to_text(last_reset.get('checkedAt'))}",
                 f"判定: {verdict_label(last_reset.get('verdict'))}，置信度: {last_reset.get('confidence', '-')}",
                 f"原文: {last_reset.get('tweetText', '-')}",
                 f"译文: {last_reset.get('tweetTextZh', '-')}",
@@ -335,6 +341,7 @@ def build_feishu_post(payload: dict, old_signature: dict) -> dict:
             [
                 [{"tag": "text", "text": "--------"}],
                 [{"tag": "text", "text": f"最新追踪: {verdict_label(latest.get('verdict'))}，置信度: {latest.get('confidence', '-')}"}],
+                [{"tag": "text", "text": f"帖子时间: {timestamp_to_text(latest.get('checkedAt'))}"}],
                 [{"tag": "text", "text": f"原文: {latest.get('tweetText', '-')}"}],
                 [{"tag": "text", "text": f"译文: {latest.get('tweetTextZh', '-')}"}],
                 [{"tag": "a", "text": "查看最新原帖", "href": latest.get("tweetUrl") or SITE_URL}],
@@ -346,6 +353,7 @@ def build_feishu_post(payload: dict, old_signature: dict) -> dict:
             [
                 [{"tag": "text", "text": "--------"}],
                 [{"tag": "text", "text": f"最近确认重置: {verdict_label(last_reset.get('verdict'))}，置信度: {last_reset.get('confidence', '-')}"}],
+                [{"tag": "text", "text": f"帖子时间: {timestamp_to_text(last_reset.get('checkedAt'))}"}],
                 [{"tag": "text", "text": f"原文: {last_reset.get('tweetText', '-')}"}],
                 [{"tag": "text", "text": f"译文: {last_reset.get('tweetTextZh', '-')}"}],
                 [{"tag": "a", "text": "查看重置原帖", "href": last_reset.get("tweetUrl") or SITE_URL}],
