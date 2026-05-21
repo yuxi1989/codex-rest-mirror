@@ -38,6 +38,10 @@ jobs:
       - name: Run monitor
         env:
           WECOM_WEBHOOK_URL: ${{ secrets.WECOM_WEBHOOK_URL }}
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          FEISHU_SECRET: ${{ secrets.FEISHU_SECRET }}
+          DINGTALK_WEBHOOK_URL: ${{ secrets.DINGTALK_WEBHOOK_URL }}
+          DINGTALK_SECRET: ${{ secrets.DINGTALK_SECRET }}
           HASCODEX_FORCE_NOTIFY: ${{ github.event.inputs.force_notify == 'true' && '1' || '0' }}
         run: python monitor_hascodex.py --once
 

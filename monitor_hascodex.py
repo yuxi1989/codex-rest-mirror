@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 import argparse
+import base64
+import hashlib
+import hmac
 import json
 import os
 import sys
@@ -262,6 +265,105 @@ def build_news_articles(payload: dict, old_signature: dict, image_url: str) -> l
     return articles[:8]
 
 
+def build_plain_summary(payload: dict, old_signature: dict) -> str:
+    summary = payload.get("automationSummary") or {}
+    latest = summary.get("latest") or {}
+    last_reset = summary.get("lastReset") or {}
+    state = payload.get("state") or "unknown"
+    title = "Codex 额度重置状态有更新" if old_signature else "Codex 额度重置监控已启动"
+
+    parts = [
+        title,
+        f"当前状态: {status_label(state)}",
+        f"页面更新时间: {timestamp_to_text(payload.get('updatedAt'))}",
+        f"预计/自动重置时间: {timestamp_to_text(payload.get('resetAt'))}",
+    ]
+    if latest:
+        parts.extend(
+            [
+                "",
+                "最新追踪帖子",
+                f"判定: {verdict_label(latest.get('verdict'))}，置信度: {latest.get('confidence', '-')}",
+                f"原文: {latest.get('tweetText', '-')}",
+                f"译文: {latest.get('tweetTextZh', '-')}",
+                f"链接: {latest.get('tweetUrl', '-')}",
+            ]
+        )
+    if last_reset:
+        parts.extend(
+            [
+                "",
+                "最近一次确认重置",
+                f"判定: {verdict_label(last_reset.get('verdict'))}，置信度: {last_reset.get('confidence', '-')}",
+                f"原文: {last_reset.get('tweetText', '-')}",
+                f"译文: {last_reset.get('tweetTextZh', '-')}",
+                f"链接: {last_reset.get('tweetUrl', '-')}",
+            ]
+        )
+    return "\n".join(parts)
+
+
+def build_dingtalk_markdown(payload: dict, old_signature: dict, new_signature: dict) -> str:
+    return build_markdown(payload, old_signature, new_signature).replace('<font color="info">', "").replace(
+        '<font color="comment">', ""
+    ).replace('<font color="warning">', "").replace("</font>", "")
+
+
+def build_feishu_post(payload: dict, old_signature: dict) -> dict:
+    summary = payload.get("automationSummary") or {}
+    latest = summary.get("latest") or {}
+    last_reset = summary.get("lastReset") or {}
+    state = payload.get("state") or "unknown"
+    title = "Codex 额度重置状态有更新" if old_signature else "Codex 额度重置监控已启动"
+
+    content = [
+        [
+            {"tag": "text", "text": "当前状态: "},
+            {"tag": "text", "text": status_label(state)},
+        ],
+        [
+            {"tag": "text", "text": f"页面更新时间: {timestamp_to_text(payload.get('updatedAt'))}"},
+        ],
+        [
+            {"tag": "text", "text": f"预计/自动重置时间: {timestamp_to_text(payload.get('resetAt'))}"},
+        ],
+    ]
+
+    if latest:
+        content.extend(
+            [
+                [{"tag": "text", "text": "--------"}],
+                [{"tag": "text", "text": f"最新追踪: {verdict_label(latest.get('verdict'))}，置信度: {latest.get('confidence', '-')}"}],
+                [{"tag": "text", "text": f"原文: {latest.get('tweetText', '-')}"}],
+                [{"tag": "text", "text": f"译文: {latest.get('tweetTextZh', '-')}"}],
+                [{"tag": "a", "text": "查看最新原帖", "href": latest.get("tweetUrl") or SITE_URL}],
+            ]
+        )
+
+    if last_reset:
+        content.extend(
+            [
+                [{"tag": "text", "text": "--------"}],
+                [{"tag": "text", "text": f"最近确认重置: {verdict_label(last_reset.get('verdict'))}，置信度: {last_reset.get('confidence', '-')}"}],
+                [{"tag": "text", "text": f"原文: {last_reset.get('tweetText', '-')}"}],
+                [{"tag": "text", "text": f"译文: {last_reset.get('tweetTextZh', '-')}"}],
+                [{"tag": "a", "text": "查看重置原帖", "href": last_reset.get("tweetUrl") or SITE_URL}],
+            ]
+        )
+
+    return {
+        "msg_type": "post",
+        "content": {
+            "post": {
+                "zh_cn": {
+                    "title": title,
+                    "content": content,
+                }
+            }
+        },
+    }
+
+
 def send_wecom_markdown(webhook_url: str, content: str, timeout: int) -> None:
     body = json.dumps({"msgtype": "markdown", "markdown": {"content": content}}, ensure_ascii=False).encode("utf-8")
     request = urllib.request.Request(
@@ -304,6 +406,102 @@ def send_wecom(webhook_url: str, markdown: str, articles: list[dict], timeout: i
             raise RuntimeError(f"Unsupported WECOM_MESSAGE_MODE: {mode}")
 
 
+def add_dingtalk_signature(webhook_url: str, secret: str | None) -> str:
+    if not secret:
+        return webhook_url
+    timestamp = str(round(time.time() * 1000))
+    string_to_sign = f"{timestamp}\n{secret}".encode("utf-8")
+    digest = hmac.new(secret.encode("utf-8"), string_to_sign, hashlib.sha256).digest()
+    sign = urllib.parse.quote_plus(base64.b64encode(digest))
+    separator = "&" if "?" in webhook_url else "?"
+    return f"{webhook_url}{separator}timestamp={timestamp}&sign={sign}"
+
+
+def send_dingtalk_markdown(webhook_url: str, title: str, markdown: str, timeout: int, secret: str | None = None) -> None:
+    body = json.dumps(
+        {
+            "msgtype": "markdown",
+            "markdown": {
+                "title": title,
+                "text": markdown,
+            },
+        },
+        ensure_ascii=False,
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        add_dingtalk_signature(webhook_url, secret),
+        data=body,
+        method="POST",
+        headers={"Content-Type": "application/json; charset=utf-8"},
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+        if payload.get("errcode") != 0:
+            raise RuntimeError(f"DingTalk webhook failed: {payload}")
+
+
+def send_dingtalk_feed_card(webhook_url: str, articles: list[dict], timeout: int, secret: str | None = None) -> None:
+    links = [
+        {
+            "title": article["title"],
+            "messageURL": article["url"],
+            "picURL": article["picurl"],
+        }
+        for article in articles
+    ]
+    body = json.dumps({"msgtype": "feedCard", "feedCard": {"links": links}}, ensure_ascii=False).encode("utf-8")
+    request = urllib.request.Request(
+        add_dingtalk_signature(webhook_url, secret),
+        data=body,
+        method="POST",
+        headers={"Content-Type": "application/json; charset=utf-8"},
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+        if payload.get("errcode") != 0:
+            raise RuntimeError(f"DingTalk feedCard webhook failed: {payload}")
+
+
+def send_dingtalk(webhook_url: str, title: str, markdown: str, articles: list[dict], timeout: int, message_mode: str, secret: str | None) -> None:
+    modes = [mode.strip().lower() for mode in message_mode.split(",") if mode.strip()]
+    if not modes:
+        modes = ["markdown", "feedcard"]
+
+    for mode in modes:
+        if mode == "markdown":
+            send_dingtalk_markdown(webhook_url, title, markdown, timeout, secret)
+        elif mode in ("feedcard", "feed_card"):
+            send_dingtalk_feed_card(webhook_url, articles, timeout, secret)
+        else:
+            raise RuntimeError(f"Unsupported DINGTALK_MESSAGE_MODE: {mode}")
+
+
+def add_feishu_signature(body: dict, secret: str | None) -> dict:
+    if not secret:
+        return body
+    timestamp = str(int(time.time()))
+    string_to_sign = f"{timestamp}\n{secret}".encode("utf-8")
+    digest = hmac.new(string_to_sign, b"", hashlib.sha256).digest()
+    signed_body = dict(body)
+    signed_body["timestamp"] = timestamp
+    signed_body["sign"] = base64.b64encode(digest).decode("utf-8")
+    return signed_body
+
+
+def send_feishu(webhook_url: str, post_body: dict, timeout: int, secret: str | None = None) -> None:
+    body = json.dumps(add_feishu_signature(post_body, secret), ensure_ascii=False).encode("utf-8")
+    request = urllib.request.Request(
+        webhook_url,
+        data=body,
+        method="POST",
+        headers={"Content-Type": "application/json; charset=utf-8"},
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+        if payload.get("code", 0) != 0:
+            raise RuntimeError(f"Feishu webhook failed: {payload}")
+
+
 def run_once(args: argparse.Namespace) -> bool:
     payload = fetch_json(args.status_url, args.timeout)
     payload = enrich_translations(payload, args.timeout)
@@ -316,13 +514,38 @@ def run_once(args: argparse.Namespace) -> bool:
         return False
 
     message = build_markdown(payload, old_signature, new_signature)
+    dingtalk_message = build_dingtalk_markdown(payload, old_signature, new_signature)
+    plain_summary = build_plain_summary(payload, old_signature)
+    feishu_post = build_feishu_post(payload, old_signature)
     articles = build_news_articles(payload, old_signature, args.image_url)
+    sent = False
     if args.webhook_url:
         send_wecom(args.webhook_url, message, articles, args.timeout, args.message_mode)
+        sent = True
+    if args.feishu_webhook_url:
+        send_feishu(args.feishu_webhook_url, feishu_post, args.timeout, args.feishu_secret)
+        sent = True
+    if args.dingtalk_webhook_url:
+        send_dingtalk(
+            args.dingtalk_webhook_url,
+            "Codex 额度重置状态",
+            dingtalk_message,
+            articles,
+            args.timeout,
+            args.dingtalk_message_mode,
+            args.dingtalk_secret,
+        )
+        sent = True
+
+    if sent:
         print("Change detected, webhook sent.")
     else:
         print("Change detected, webhook URL not configured. Message preview:")
         print(message)
+        print("\nPlain summary preview:")
+        print(plain_summary)
+        print("\nFeishu post preview:")
+        print(json.dumps(feishu_post, ensure_ascii=False, indent=2))
         print("\nNews articles preview:")
         print(json.dumps(articles, ensure_ascii=False, indent=2))
 
@@ -338,14 +561,19 @@ def run_once(args: argparse.Namespace) -> bool:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Monitor hascodexratelimitreset.today and notify WeCom on updates.")
+    parser = argparse.ArgumentParser(description="Monitor hascodexratelimitreset.today and notify chat webhooks on updates.")
     parser.add_argument("--status-url", default=os.getenv("HASCODEX_STATUS_URL", STATUS_URL))
     parser.add_argument("--webhook-url", default=os.getenv("WECOM_WEBHOOK_URL"))
+    parser.add_argument("--feishu-webhook-url", default=os.getenv("FEISHU_WEBHOOK_URL"))
+    parser.add_argument("--feishu-secret", default=os.getenv("FEISHU_SECRET"))
+    parser.add_argument("--dingtalk-webhook-url", default=os.getenv("DINGTALK_WEBHOOK_URL"))
+    parser.add_argument("--dingtalk-secret", default=os.getenv("DINGTALK_SECRET"))
     parser.add_argument("--state-file", type=Path, default=Path(os.getenv("HASCODEX_STATE_FILE", DEFAULT_STATE_FILE)))
     parser.add_argument("--interval", type=int, default=int(os.getenv("HASCODEX_INTERVAL", "300")))
     parser.add_argument("--timeout", type=int, default=int(os.getenv("HASCODEX_TIMEOUT", "15")))
     parser.add_argument("--image-url", default=os.getenv("HASCODEX_IMAGE_URL", DEFAULT_IMAGE_URL))
     parser.add_argument("--message-mode", default=os.getenv("WECOM_MESSAGE_MODE", "markdown,news"))
+    parser.add_argument("--dingtalk-message-mode", default=os.getenv("DINGTALK_MESSAGE_MODE", "markdown,feedcard"))
     parser.add_argument("--force", action="store_true", default=os.getenv("HASCODEX_FORCE_NOTIFY") == "1")
     parser.add_argument("--once", action="store_true", help="Run one check and exit.")
     return parser.parse_args()
