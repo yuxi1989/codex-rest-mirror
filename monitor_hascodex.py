@@ -29,6 +29,10 @@ STATE_LABELS = {
     "no": "未重置",
 }
 
+COLOR_INFO = "info"
+COLOR_COMMENT = "comment"
+COLOR_WARNING = "warning"
+
 
 def fetch_json(url: str, timeout: int) -> dict:
     request = urllib.request.Request(
@@ -67,6 +71,26 @@ def status_label(value: str) -> str:
     if not value:
         return "未知"
     return f"{STATE_LABELS.get(value, value)} ({value.upper()})"
+
+
+def markdown_color(value: str, color: str) -> str:
+    return f'<font color="{color}">{value}</font>'
+
+
+def state_color(value: str) -> str:
+    if value == "yes":
+        return COLOR_INFO
+    if value == "no":
+        return COLOR_WARNING
+    return COLOR_COMMENT
+
+
+def verdict_color(value: str) -> str:
+    if value == "reset_confirmed":
+        return COLOR_INFO
+    if value == "not_reset":
+        return COLOR_WARNING
+    return COLOR_COMMENT
 
 
 def verdict_label(value: str) -> str:
@@ -147,41 +171,46 @@ def build_markdown(payload: dict, old_signature: dict, new_signature: dict) -> s
     last_reset = summary.get("lastReset") or {}
     state = payload.get("state") or "unknown"
     title = "Codex 额度重置状态有更新" if old_signature else "Codex 额度重置监控已启动"
+    state_text = markdown_color(status_label(state), state_color(state))
+    updated_at = markdown_color(timestamp_to_text(payload.get("updatedAt")), COLOR_COMMENT)
+    reset_at = markdown_color(timestamp_to_text(payload.get("resetAt")), COLOR_COMMENT)
 
     lines = [
-        f"**{title}**",
-        f"> 当前状态: **{status_label(state)}**",
-        f"> 页面更新时间: {timestamp_to_text(payload.get('updatedAt'))}",
-        f"> 预计/自动重置时间: {timestamp_to_text(payload.get('resetAt'))}",
+        f"**{markdown_color(title, COLOR_INFO)}**",
+        f"> 当前状态: **{state_text}**",
+        f"> 页面更新时间: {updated_at}",
+        f"> 预计/自动重置时间: {reset_at}",
     ]
 
     if latest:
+        latest_verdict = latest.get("verdict")
         lines.extend(
             [
                 "",
-                "**最新追踪帖子**",
-                f"> 判定: {verdict_label(latest.get('verdict'))}，置信度: {latest.get('confidence', '-')}",
+                f"**{markdown_color('最新追踪帖子', COLOR_INFO)}**",
+                f"> 判定: **{markdown_color(verdict_label(latest_verdict), verdict_color(latest_verdict))}**，置信度: {markdown_color(str(latest.get('confidence', '-')), COLOR_COMMENT)}",
                 f"> 原文: {latest.get('tweetText', '-')}",
-                f"> 译文: {latest.get('tweetTextZh', '-')}",
-                f"> 链接: {latest.get('tweetUrl', '-')}",
+                f"> 译文: {markdown_color(latest.get('tweetTextZh', '-'), COLOR_INFO)}",
+                f"> 链接: [查看原帖]({latest.get('tweetUrl', '-')})",
             ]
         )
 
     if last_reset:
+        last_reset_verdict = last_reset.get("verdict")
         lines.extend(
             [
                 "",
-                "**最近一次确认重置**",
-                f"> 判定: {verdict_label(last_reset.get('verdict'))}，置信度: {last_reset.get('confidence', '-')}",
+                f"**{markdown_color('最近一次确认重置', COLOR_INFO)}**",
+                f"> 判定: **{markdown_color(verdict_label(last_reset_verdict), verdict_color(last_reset_verdict))}**，置信度: {markdown_color(str(last_reset.get('confidence', '-')), COLOR_COMMENT)}",
                 f"> 原文: {last_reset.get('tweetText', '-')}",
-                f"> 译文: {last_reset.get('tweetTextZh', '-')}",
-                f"> 链接: {last_reset.get('tweetUrl', '-')}",
+                f"> 译文: {markdown_color(last_reset.get('tweetTextZh', '-'), COLOR_INFO)}",
+                f"> 链接: [查看原帖]({last_reset.get('tweetUrl', '-')})",
             ]
         )
 
     if old_signature:
         changed_keys = [key for key, value in new_signature.items() if old_signature.get(key) != value]
-        lines.extend(["", f"变化字段: `{', '.join(changed_keys)}`"])
+        lines.extend(["", f"变化字段: {markdown_color(', '.join(changed_keys), COLOR_WARNING)}"])
 
     return "\n".join(lines)
 
