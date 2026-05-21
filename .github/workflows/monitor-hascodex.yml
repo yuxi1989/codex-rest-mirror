@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: "*/10 * * * *"
   workflow_dispatch:
+    inputs:
+      force_notify:
+        description: "Force send a notification even when status is unchanged"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 permissions:
   contents: write
@@ -29,6 +38,7 @@ jobs:
       - name: Run monitor
         env:
           WECOM_WEBHOOK_URL: ${{ secrets.WECOM_WEBHOOK_URL }}
+          HASCODEX_FORCE_NOTIFY: ${{ github.event.inputs.force_notify == 'true' && '1' || '0' }}
         run: python monitor_hascodex.py --once
 
       - name: Save state

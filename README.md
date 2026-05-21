@@ -34,6 +34,11 @@ python3 monitor_hascodex.py
 HASCODEX_INTERVAL=60 python3 monitor_hascodex.py
 ```
 
+脚本默认发送两类企业微信机器人消息：
+
+- `markdown`: 中文摘要、原文、中文译文、链接
+- `news`: 图文卡片，点击可打开对应 X 帖子或状态页
+
 脚本会把上一次看到的状态保存到 `.hascodex-monitor-state.json`，只有检测到这些字段变化时才发送企业微信消息：
 
 - `state`
@@ -53,6 +58,7 @@ HASCODEX_INTERVAL=60 python3 monitor_hascodex.py
 ```
 
 它会每 10 分钟运行一次，也支持在 GitHub 页面手动触发 `workflow_dispatch`。
+手动触发时可以把 `force_notify` 设为 `true`，即使状态没有变化也会强制发送一次通知，适合测试通知格式。
 
 部署步骤：
 
@@ -66,3 +72,9 @@ Value: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=你的key
 ```
 
 workflow 会把 `.hascodex-monitor-state.json` 提交回仓库，用于下次运行时判断是否有更新。不要把 webhook 写进代码或提交 `.env`。
+
+可选环境变量：
+
+- `WECOM_MESSAGE_MODE`: 通知类型，默认 `markdown,news`，也可以设为 `markdown` 或 `news`
+- `HASCODEX_IMAGE_URL`: 图文卡片封面图 URL
+- `HASCODEX_FORCE_NOTIFY`: 设为 `1` 时强制发送一次通知
