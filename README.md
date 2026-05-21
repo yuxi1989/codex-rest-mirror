@@ -11,6 +11,7 @@ Monitor the Codex rate-limit reset status from [hascodexratelimitreset.today](ht
 - 支持 GitHub Actions 定时部署，无需服务器
 - 支持企业微信、飞书、钉钉多个 webhook 同时推送
 - 通知内容包含当前状态、页面更新时间、最新追踪帖子、最近确认重置帖子
+- 通知时间固定显示为北京时间，适合 GitHub Actions 的 UTC 运行环境
 - 自动生成中文译文，保留英文原文和原帖链接
 - 企业微信支持 `markdown + news` 图文卡片
 - 飞书支持 `post` 富文本消息
@@ -25,6 +26,7 @@ Monitor the Codex rate-limit reset status from [hascodexratelimitreset.today](ht
 - Runs on GitHub Actions without a dedicated server
 - Sends notifications to WeCom, Feishu/Lark, and DingTalk webhooks
 - Includes current status, update time, latest tracked post, and last confirmed reset
+- Displays timestamps in Beijing time even when running in GitHub Actions UTC
 - Adds Chinese translation while keeping the original English text and source links
 - Supports WeCom `markdown + news`
 - Supports Feishu/Lark `post` rich text

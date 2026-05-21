@@ -10,7 +10,7 @@ import time
 import urllib.parse
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 
@@ -19,6 +19,7 @@ SITE_URL = "https://hascodexratelimitreset.today/"
 DEFAULT_IMAGE_URL = "https://dummyimage.com/900x383/111827/ffffff.png&text=Codex+Reset"
 DEFAULT_STATE_FILE = Path(".hascodex-monitor-state.json")
 TRANSLATE_URL = "https://translate.googleapis.com/translate_a/single"
+BEIJING_TZ = timezone(timedelta(hours=8), "Asia/Shanghai")
 
 
 VERDICT_LABELS = {
@@ -67,7 +68,7 @@ def save_state(path: Path, state: dict) -> None:
 def timestamp_to_text(value) -> str:
     if not isinstance(value, (int, float)):
         return "-"
-    return datetime.fromtimestamp(value / 1000, tz=timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+    return datetime.fromtimestamp(value / 1000, tz=timezone.utc).astimezone(BEIJING_TZ).strftime("%Y-%m-%d %H:%M:%S 北京时间")
 
 
 def status_label(value: str) -> str:
