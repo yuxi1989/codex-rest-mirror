@@ -1,13 +1,13 @@
 {
   "signature": {
-    "state": "no",
-    "updatedAt": 1779226519502,
-    "resetAt": null,
-    "latestTweetId": "2058075853322633552",
+    "state": "yes",
+    "updatedAt": 1779567311544,
+    "resetAt": 1779639311544,
+    "latestTweetId": "2058285701146501415",
     "latestVerdict": "not_reset",
-    "lastResetTweetId": "2058075853322633552",
-    "lastResetCheckedAt": null
+    "lastResetTweetId": "2058280452851638313",
+    "lastResetCheckedAt": 1779567311544
   },
-  "checkedAt": 1779521915276,
+  "checkedAt": 1779568837226,
   "statusUrl": "https://hascodexratelimitreset.today/api/status"
 }
