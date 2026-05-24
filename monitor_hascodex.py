@@ -36,6 +36,9 @@ STATE_LABELS = {
 COLOR_INFO = "info"
 COLOR_COMMENT = "comment"
 COLOR_WARNING = "warning"
+RESET_AT_LABEL = "页面状态自动复位时间"
+TRACKED_AT_LABEL = "追踪/发布时间"
+RESET_TIME_NOTE = "公开确认帖只说明官方已确认重置；账号实际重置时间以 Codex 面板的 Reset 时间倒推为准。"
 
 
 def fetch_json(url: str, timeout: int) -> dict:
@@ -189,7 +192,7 @@ def build_markdown(payload: dict, old_signature: dict, new_signature: dict) -> s
         f"**{markdown_color(title, COLOR_INFO)}**",
         f"> 当前状态: **{state_text}**",
         f"> 页面更新时间: {updated_at}",
-        f"> 预计/自动重置时间: {reset_at}",
+        f"> {RESET_AT_LABEL}: {reset_at}",
     ]
 
     if latest:
@@ -198,7 +201,7 @@ def build_markdown(payload: dict, old_signature: dict, new_signature: dict) -> s
             [
                 "",
                 f"**{markdown_color('最新追踪帖子', COLOR_INFO)}**",
-                f"> 帖子时间: {markdown_color(timestamp_to_text(latest.get('checkedAt')), COLOR_COMMENT)}",
+                f"> {TRACKED_AT_LABEL}: {markdown_color(timestamp_to_text(latest.get('checkedAt')), COLOR_COMMENT)}",
                 f"> 判定: **{markdown_color(verdict_label(latest_verdict), verdict_color(latest_verdict))}**，置信度: {markdown_color(str(latest.get('confidence', '-')), COLOR_COMMENT)}",
                 *markdown_lines("原文", latest.get("tweetText", "-")),
                 *markdown_lines("译文", latest.get("tweetTextZh", "-"), COLOR_INFO),
@@ -212,8 +215,9 @@ def build_markdown(payload: dict, old_signature: dict, new_signature: dict) -> s
             [
                 "",
                 f"**{markdown_color('最近一次确认重置', COLOR_INFO)}**",
-                f"> 帖子时间: {markdown_color(timestamp_to_text(last_reset.get('checkedAt')), COLOR_COMMENT)}",
+                f"> {TRACKED_AT_LABEL}: {markdown_color(timestamp_to_text(last_reset.get('checkedAt')), COLOR_COMMENT)}",
                 f"> 判定: **{markdown_color(verdict_label(last_reset_verdict), verdict_color(last_reset_verdict))}**，置信度: {markdown_color(str(last_reset.get('confidence', '-')), COLOR_COMMENT)}",
+                f"> 说明: {markdown_color(RESET_TIME_NOTE, COLOR_COMMENT)}",
                 *markdown_lines("原文", last_reset.get("tweetText", "-")),
                 *markdown_lines("译文", last_reset.get("tweetTextZh", "-"), COLOR_INFO),
                 f"> 链接: [查看原帖]({last_reset.get('tweetUrl', '-')})",
@@ -240,7 +244,7 @@ def build_news_articles(payload: dict, old_signature: dict, image_url: str) -> l
             "description": "\n".join(
                 [
                     f"页面更新时间: {timestamp_to_text(payload.get('updatedAt'))}",
-                    f"预计/自动重置时间: {timestamp_to_text(payload.get('resetAt'))}",
+                    f"{RESET_AT_LABEL}: {timestamp_to_text(payload.get('resetAt'))}",
                 ]
             ),
             "url": latest.get("tweetUrl") or last_reset.get("tweetUrl") or SITE_URL,
@@ -287,14 +291,14 @@ def build_plain_summary(payload: dict, old_signature: dict) -> str:
         title,
         f"当前状态: {status_label(state)}",
         f"页面更新时间: {timestamp_to_text(payload.get('updatedAt'))}",
-        f"预计/自动重置时间: {timestamp_to_text(payload.get('resetAt'))}",
+        f"{RESET_AT_LABEL}: {timestamp_to_text(payload.get('resetAt'))}",
     ]
     if latest:
         parts.extend(
             [
                 "",
                 "最新追踪帖子",
-                f"帖子时间: {timestamp_to_text(latest.get('checkedAt'))}",
+                f"{TRACKED_AT_LABEL}: {timestamp_to_text(latest.get('checkedAt'))}",
                 f"判定: {verdict_label(latest.get('verdict'))}，置信度: {latest.get('confidence', '-')}",
                 f"原文: {latest.get('tweetText', '-')}",
                 f"译文: {latest.get('tweetTextZh', '-')}",
@@ -306,8 +310,9 @@ def build_plain_summary(payload: dict, old_signature: dict) -> str:
             [
                 "",
                 "最近一次确认重置",
-                f"帖子时间: {timestamp_to_text(last_reset.get('checkedAt'))}",
+                f"{TRACKED_AT_LABEL}: {timestamp_to_text(last_reset.get('checkedAt'))}",
                 f"判定: {verdict_label(last_reset.get('verdict'))}，置信度: {last_reset.get('confidence', '-')}",
+                f"说明: {RESET_TIME_NOTE}",
                 f"原文: {last_reset.get('tweetText', '-')}",
                 f"译文: {last_reset.get('tweetTextZh', '-')}",
                 f"链接: {last_reset.get('tweetUrl', '-')}",
@@ -338,7 +343,7 @@ def build_feishu_post(payload: dict, old_signature: dict) -> dict:
             {"tag": "text", "text": f"页面更新时间: {timestamp_to_text(payload.get('updatedAt'))}"},
         ],
         [
-            {"tag": "text", "text": f"预计/自动重置时间: {timestamp_to_text(payload.get('resetAt'))}"},
+            {"tag": "text", "text": f"{RESET_AT_LABEL}: {timestamp_to_text(payload.get('resetAt'))}"},
         ],
     ]
 
@@ -347,7 +352,7 @@ def build_feishu_post(payload: dict, old_signature: dict) -> dict:
             [
                 [{"tag": "text", "text": "--------"}],
                 [{"tag": "text", "text": f"最新追踪: {verdict_label(latest.get('verdict'))}，置信度: {latest.get('confidence', '-')}"}],
-                [{"tag": "text", "text": f"帖子时间: {timestamp_to_text(latest.get('checkedAt'))}"}],
+                [{"tag": "text", "text": f"{TRACKED_AT_LABEL}: {timestamp_to_text(latest.get('checkedAt'))}"}],
                 [{"tag": "text", "text": f"原文: {latest.get('tweetText', '-')}"}],
                 [{"tag": "text", "text": f"译文: {latest.get('tweetTextZh', '-')}"}],
                 [{"tag": "a", "text": "查看最新原帖", "href": latest.get("tweetUrl") or SITE_URL}],
@@ -359,7 +364,8 @@ def build_feishu_post(payload: dict, old_signature: dict) -> dict:
             [
                 [{"tag": "text", "text": "--------"}],
                 [{"tag": "text", "text": f"最近确认重置: {verdict_label(last_reset.get('verdict'))}，置信度: {last_reset.get('confidence', '-')}"}],
-                [{"tag": "text", "text": f"帖子时间: {timestamp_to_text(last_reset.get('checkedAt'))}"}],
+                [{"tag": "text", "text": f"{TRACKED_AT_LABEL}: {timestamp_to_text(last_reset.get('checkedAt'))}"}],
+                [{"tag": "text", "text": f"说明: {RESET_TIME_NOTE}"}],
                 [{"tag": "text", "text": f"原文: {last_reset.get('tweetText', '-')}"}],
                 [{"tag": "text", "text": f"译文: {last_reset.get('tweetTextZh', '-')}"}],
                 [{"tag": "a", "text": "查看重置原帖", "href": last_reset.get("tweetUrl") or SITE_URL}],
