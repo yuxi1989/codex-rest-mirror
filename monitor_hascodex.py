@@ -81,6 +81,12 @@ def markdown_color(value: str, color: str) -> str:
     return f'<font color="{color}">{value}</font>'
 
 
+def markdown_lines(label: str, value: str, color: str | None = None) -> list[str]:
+    lines = str(value or "-").splitlines() or ["-"]
+    rendered = [markdown_color(line, color) if color and line else line for line in lines]
+    return [f"> {label}: {rendered[0]}", *[f"> {line}" for line in rendered[1:]]]
+
+
 def state_color(value: str) -> str:
     if value == "yes":
         return COLOR_INFO
@@ -194,8 +200,8 @@ def build_markdown(payload: dict, old_signature: dict, new_signature: dict) -> s
                 f"**{markdown_color('最新追踪帖子', COLOR_INFO)}**",
                 f"> 帖子时间: {markdown_color(timestamp_to_text(latest.get('checkedAt')), COLOR_COMMENT)}",
                 f"> 判定: **{markdown_color(verdict_label(latest_verdict), verdict_color(latest_verdict))}**，置信度: {markdown_color(str(latest.get('confidence', '-')), COLOR_COMMENT)}",
-                f"> 原文: {latest.get('tweetText', '-')}",
-                f"> 译文: {markdown_color(latest.get('tweetTextZh', '-'), COLOR_INFO)}",
+                *markdown_lines("原文", latest.get("tweetText", "-")),
+                *markdown_lines("译文", latest.get("tweetTextZh", "-"), COLOR_INFO),
                 f"> 链接: [查看原帖]({latest.get('tweetUrl', '-')})",
             ]
         )
@@ -208,8 +214,8 @@ def build_markdown(payload: dict, old_signature: dict, new_signature: dict) -> s
                 f"**{markdown_color('最近一次确认重置', COLOR_INFO)}**",
                 f"> 帖子时间: {markdown_color(timestamp_to_text(last_reset.get('checkedAt')), COLOR_COMMENT)}",
                 f"> 判定: **{markdown_color(verdict_label(last_reset_verdict), verdict_color(last_reset_verdict))}**，置信度: {markdown_color(str(last_reset.get('confidence', '-')), COLOR_COMMENT)}",
-                f"> 原文: {last_reset.get('tweetText', '-')}",
-                f"> 译文: {markdown_color(last_reset.get('tweetTextZh', '-'), COLOR_INFO)}",
+                *markdown_lines("原文", last_reset.get("tweetText", "-")),
+                *markdown_lines("译文", last_reset.get("tweetTextZh", "-"), COLOR_INFO),
                 f"> 链接: [查看原帖]({last_reset.get('tweetUrl', '-')})",
             ]
         )
