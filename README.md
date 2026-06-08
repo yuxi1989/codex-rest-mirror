@@ -10,6 +10,8 @@
 - 合并生成一份综合判断：是否重置、Radar 窗口状态、建议动作、24/48 小时概率、最近窗口、Model IQ。
 - 默认只在重要字段变化时通知，过滤频繁刷新的时间戳字段。
 - 默认每个平台只发一条 `markdown/post` 消息，避免 `markdown + news/feedCard` 造成一次事件多条 webhook。
+- webhook 默认采用 Radar 风格短摘要：行动建议、重置概率、综合状态、Radar 判断、状态依据。
+- 低价值 `not_reset` 最新动态不会进入正文，避免把普通互动推文推送到群里。
 - 支持 GitHub Actions 定时运行和手动强制推送。
 - 支持企业微信、飞书/Lark、钉钉 webhook，飞书和钉钉支持签名密钥。
 
