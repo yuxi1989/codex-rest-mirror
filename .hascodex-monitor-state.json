@@ -20,7 +20,7 @@
     "radarModelIqStatus": "red",
     "radarModelIqScore": 62.5
   },
-  "checkedAt": 1780890449931,
+  "checkedAt": 1780890466444,
   "statusUrl": "https://hascodexratelimitreset.today/api/status",
   "radarUrl": "https://codexradar.com/current.json"
 }
