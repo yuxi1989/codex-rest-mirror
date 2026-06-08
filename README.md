@@ -1,16 +1,18 @@
 # Codex Reset Monitor
 
-监控 [hascodexratelimitreset.today](https://hascodexratelimitreset.today/) 的 Codex 额度重置状态，并在状态变化时推送到企业微信、飞书、钉钉机器人。
+监控 [hascodexratelimitreset.today](https://hascodexratelimitreset.today/) 与 [Codex Radar](https://codexradar.com/) 的 Codex 额度重置状态，并在重要状态变化时推送到企业微信、飞书、钉钉机器人。
 
-Monitor the Codex rate-limit reset status from [hascodexratelimitreset.today](https://hascodexratelimitreset.today/) and notify WeCom, Feishu/Lark, or DingTalk webhooks when the status changes.
+Monitor the Codex rate-limit reset status from [hascodexratelimitreset.today](https://hascodexratelimitreset.today/) and [Codex Radar](https://codexradar.com/), then notify WeCom, Feishu/Lark, or DingTalk webhooks on meaningful changes.
 
 ## 功能介绍
 
 - 定时请求公开接口：`https://hascodexratelimitreset.today/api/status`
-- 检测状态变化并自动去重，避免重复通知
+- 同步读取 Codex Radar：窗口状态、24/48 小时预测、最近窗口、Model IQ
+- 检测重要状态变化并自动去重，避免更新时间刷新导致重复通知
 - 支持 GitHub Actions 定时部署，无需服务器
 - 支持企业微信、飞书、钉钉多个 webhook 同时推送
 - 通知内容包含当前状态、页面更新时间、最新追踪帖子、最近确认重置帖子
+- 通知内容包含 Codex Radar 的窗口建议、预测摘要、最近重置窗口、Model IQ
 - 通知时间固定显示为北京时间，适合 GitHub Actions 的 UTC 运行环境
 - 自动生成中文译文，保留英文原文和原帖链接
 - 企业微信支持 `markdown + news` 图文卡片
@@ -22,10 +24,12 @@ Monitor the Codex rate-limit reset status from [hascodexratelimitreset.today](ht
 ## Features
 
 - Polls the public endpoint: `https://hascodexratelimitreset.today/api/status`
-- Detects meaningful status changes and suppresses duplicate alerts
+- Reads Codex Radar window status, prediction, recent windows, and Model IQ
+- Detects meaningful status changes and suppresses timestamp-only duplicate alerts
 - Runs on GitHub Actions without a dedicated server
 - Sends notifications to WeCom, Feishu/Lark, and DingTalk webhooks
 - Includes current status, update time, latest tracked post, and last confirmed reset
+- Includes Codex Radar action, prediction summary, recent reset window, and Model IQ
 - Displays timestamps in Beijing time even when running in GitHub Actions UTC
 - Adds Chinese translation while keeping the original English text and source links
 - Supports WeCom `markdown + news`
@@ -40,6 +44,7 @@ Monitor the Codex rate-limit reset status from [hascodexratelimitreset.today](ht
 
 ```text
 GET https://hascodexratelimitreset.today/api/status
+GET https://codexradar.com/current.json
 ```
 
 脚本会关注这些字段：
@@ -51,6 +56,14 @@ GET https://hascodexratelimitreset.today/api/status
 - `automationSummary.lastReset`: 最近一次确认 reset 的帖子和判定
 
 The monitor watches these fields and stores the last seen signature in `.hascodex-monitor-state.json`.
+
+Codex Radar 重点关注这些字段：
+
+- `window_open` / `status` / `recommended_action`: 当前是否有窗口、状态与建议动作
+- `window`: 当前窗口标题、范围、打开/关闭时间、来源链接
+- `prediction`: 24/48 小时概率、预测级别、摘要、正负信号
+- `recent_windows[0]`: 最近一次重置窗口
+- `model_iq.latest`: 最新 Model IQ 分数和状态
 
 ## 快速开始
 
@@ -153,6 +166,7 @@ English setup:
 | 变量 | 默认值 | 说明 |
 |---|---|---|
 | `HASCODEX_STATUS_URL` | `https://hascodexratelimitreset.today/api/status` | 监控接口地址 |
+| `CODEX_RADAR_URL` | `https://codexradar.com/current.json` | Codex Radar JSON 地址；设为空可关闭 |
 | `HASCODEX_INTERVAL` | `300` | 本地持续运行时的轮询间隔，单位秒 |
 | `HASCODEX_TIMEOUT` | `15` | HTTP 请求超时时间，单位秒 |
 | `HASCODEX_STATE_FILE` | `.hascodex-monitor-state.json` | 本地状态文件路径 |
@@ -168,15 +182,25 @@ English setup:
 
 ## 去重逻辑
 
-脚本只在以下字段变化时发送通知：
+脚本只在重要字段变化时发送通知，避免 `updatedAt`、`resetAt`、`checkedAt` 这类频繁刷新字段造成 webhook 噪音。
+
+hascodex 侧关注：
 
 - `state`
-- `updatedAt`
-- `resetAt`
 - `automationSummary.latest.tweetId`
 - `automationSummary.latest.verdict`
 - `automationSummary.lastReset.tweetId`
-- `automationSummary.lastReset.checkedAt`
+
+Codex Radar 侧关注：
+
+- `window_open`
+- `status`
+- `recommended_action`
+- `window.opened_at` / `window.closed_at` / `window.source_url`
+- `prediction.level`
+- `prediction.probability_24h` / `prediction.probability_48h`，按 5% 档位去抖
+- `recent_windows[0]`
+- `model_iq.latest.date` / `score` / `status`
 
 GitHub Actions 会把 `.hascodex-monitor-state.json` 提交回仓库，所以每次定时运行都能基于上一次结果判断是否需要推送。
 
