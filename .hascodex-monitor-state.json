@@ -3,11 +3,11 @@
     "state": "no",
     "updatedAt": 1780532876323,
     "resetAt": null,
-    "latestTweetId": "2063748242681307611",
+    "latestTweetId": "2063772925644464276",
     "latestVerdict": "not_reset",
     "lastResetTweetId": "2062329981548802523",
     "lastResetCheckedAt": 1780532876323
   },
-  "checkedAt": 1780871686042,
+  "checkedAt": 1780884163085,
   "statusUrl": "https://hascodexratelimitreset.today/api/status"
 }
