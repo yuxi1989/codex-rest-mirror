@@ -56,3 +56,17 @@ def build_signature(hascodex: dict, radar: dict | None, old_signature: dict | No
 def changed_keys(old_signature: dict, new_signature: dict) -> list[str]:
     return [key for key, value in new_signature.items() if old_signature.get(key) != value]
 
+
+def notification_needed(old_signature: dict, new_signature: dict) -> bool:
+    if not old_signature:
+        return True
+
+    keys = changed_keys(old_signature, new_signature)
+    if not keys:
+        return False
+
+    probability_keys = {"radarProbability24hBucket", "radarProbability48hBucket"}
+    if set(keys).issubset(probability_keys) and new_signature.get("radarPredictionLevel") == "low":
+        return False
+
+    return True

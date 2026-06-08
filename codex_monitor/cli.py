@@ -9,7 +9,7 @@ import urllib.error
 from pathlib import Path
 
 from .messages import build_feishu_post, build_markdown, build_news_articles, build_plain_summary
-from .signature import build_signature
+from .signature import build_signature, notification_needed
 from .snapshot import build_snapshot
 from .sources import RADAR_URL, fetch_sources
 from .utils import load_state, save_state
@@ -21,10 +21,16 @@ DEFAULT_IMAGE_URL = "https://dummyimage.com/900x383/111827/ffffff.png&text=Codex
 DEFAULT_STATE_FILE = Path(".hascodex-monitor-state.json")
 
 
-def has_changed(old_signature: dict, new_signature: dict) -> bool:
-    if not old_signature:
-        return True
-    return old_signature != new_signature
+def save_monitor_state(args: argparse.Namespace, signature: dict) -> None:
+    save_state(
+        args.state_file,
+        {
+            "signature": signature,
+            "checkedAt": int(time.time() * 1000),
+            "statusUrl": args.status_url,
+            "radarUrl": args.radar_url,
+        },
+    )
 
 
 def run_once(args: argparse.Namespace) -> bool:
@@ -33,7 +39,9 @@ def run_once(args: argparse.Namespace) -> bool:
     hascodex, radar, source_errors = fetch_sources(args.status_url, args.radar_url, args.timeout)
     new_signature = build_signature(hascodex, radar, old_signature)
 
-    if not args.force and not has_changed(old_signature, new_signature):
+    if not args.force and not notification_needed(old_signature, new_signature):
+        if old_signature != new_signature:
+            save_monitor_state(args, new_signature)
         print("No meaningful change.")
         return False
 
@@ -66,15 +74,7 @@ def run_once(args: argparse.Namespace) -> bool:
         print("\nNews articles preview:")
         print(json.dumps(articles, ensure_ascii=False, indent=2))
 
-    save_state(
-        args.state_file,
-        {
-            "signature": new_signature,
-            "checkedAt": int(time.time() * 1000),
-            "statusUrl": args.status_url,
-            "radarUrl": args.radar_url,
-        },
-    )
+    save_monitor_state(args, new_signature)
     return True
 
 

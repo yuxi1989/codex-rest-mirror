@@ -10,8 +10,9 @@
 - 合并生成一份综合判断：是否重置、Radar 窗口状态、建议动作、24/48 小时概率、最近窗口、Model IQ。
 - 默认只在重要字段变化时通知，过滤频繁刷新的时间戳字段。
 - 默认每个平台只发一条 `markdown/post` 消息，避免 `markdown + news/feedCard` 造成一次事件多条 webhook。
-- webhook 默认采用 Radar 风格短摘要：行动建议、重置概率、综合状态、Radar 判断、状态依据。
+- webhook 默认采用紧凑 Radar 卡片：行动、概率、状态、判断、IQ、依据。
 - 低价值 `not_reset` 最新动态不会进入正文，避免把普通互动推文推送到群里。
+- 低概率场景下，仅 `24h/48h` 概率桶变化不会触发 webhook，只更新状态文件。
 - 支持 GitHub Actions 定时运行和手动强制推送。
 - 支持企业微信、飞书/Lark、钉钉 webhook，飞书和钉钉支持签名密钥。
 
@@ -128,6 +129,8 @@ Codex Radar 侧关注：
 - `monitored_at`
 
 如果 Codex Radar 临时拉取失败，脚本会保留上一次 Radar 签名，不会因为单次源站失败触发重复通知；通知正文会显示数据源警告。
+
+低概率 `low` 状态下，如果只有 `24h/48h` 概率桶变化，脚本只更新 `.hascodex-monitor-state.json`，不发送 webhook。
 
 ## GitHub Actions 部署
 
