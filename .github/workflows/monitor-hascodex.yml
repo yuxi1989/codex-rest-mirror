@@ -1,4 +1,4 @@
-name: Monitor hascodex reset
+name: Monitor Codex reset radar
 
 on:
   schedule:
@@ -35,7 +35,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Run monitor
+      - name: Run combined monitor
         env:
           WECOM_WEBHOOK_URL: ${{ secrets.WECOM_WEBHOOK_URL }}
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
