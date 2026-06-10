@@ -1,9 +1,9 @@
 {
   "signature": {
     "state": "no",
-    "latestTweetId": "2064311852461371604",
+    "latestTweetId": "2064572276180484475",
     "latestVerdict": "not_reset",
-    "lastResetTweetId": "2064311852461371604",
+    "lastResetTweetId": "2064572276180484475",
     "radarWindowOpen": false,
     "radarStatus": "none",
     "radarAction": "wait",
@@ -12,7 +12,7 @@
     "radarSourceUrl": "https://x.com/thsottiaux/status/2062329981548802523",
     "radarPredictionLevel": "medium",
     "radarProbability24hBucket": 0.3,
-    "radarProbability48hBucket": 0.4,
+    "radarProbability48hBucket": 0.45,
     "radarLatestWindow": "codex-speed-window-2026-06-04-codex",
     "radarLatestWindowStatus": "closed",
     "radarLatestWindowClosedAt": "2026-06-04T08:25:00+08:00",
@@ -20,7 +20,7 @@
     "radarModelIqStatus": "yellow",
     "radarModelIqScore": 87.5
   },
-  "checkedAt": 1781066522707,
+  "checkedAt": 1781080653996,
   "statusUrl": "https://hascodexratelimitreset.today/api/status",
   "radarUrl": "https://codexradar.com/current.json"
 }
