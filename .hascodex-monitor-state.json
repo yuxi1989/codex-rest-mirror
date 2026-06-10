@@ -11,7 +11,7 @@
     "radarClosedAt": "2026-06-04T08:25:58+08:00",
     "radarSourceUrl": "https://x.com/thsottiaux/status/2062329981548802523",
     "radarPredictionLevel": "medium",
-    "radarProbability24hBucket": 0.3,
+    "radarProbability24hBucket": 0.35,
     "radarProbability48hBucket": 0.45,
     "radarLatestWindow": "codex-speed-window-2026-06-04-codex",
     "radarLatestWindowStatus": "closed",
@@ -20,7 +20,7 @@
     "radarModelIqStatus": "yellow",
     "radarModelIqScore": 87.5
   },
-  "checkedAt": 1781080653996,
+  "checkedAt": 1781092561845,
   "statusUrl": "https://hascodexratelimitreset.today/api/status",
   "radarUrl": "https://codexradar.com/current.json"
 }
