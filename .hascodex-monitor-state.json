@@ -16,11 +16,11 @@
     "radarLatestWindow": "codex-speed-window-2026-06-04-codex",
     "radarLatestWindowStatus": "closed",
     "radarLatestWindowClosedAt": "2026-06-04T08:25:00+08:00",
-    "radarModelIqDate": "2026-06-09",
-    "radarModelIqStatus": "green",
-    "radarModelIqScore": 100.0
+    "radarModelIqDate": "2026-06-10",
+    "radarModelIqStatus": "yellow",
+    "radarModelIqScore": 87.5
   },
-  "checkedAt": 1781049956067,
+  "checkedAt": 1781066522707,
   "statusUrl": "https://hascodexratelimitreset.today/api/status",
   "radarUrl": "https://codexradar.com/current.json"
 }
