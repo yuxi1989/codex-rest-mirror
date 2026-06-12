@@ -1,9 +1,9 @@
 {
   "signature": {
     "state": "no",
-    "latestTweetId": "2065193272952422852",
+    "latestTweetId": "2065468501750649006",
     "latestVerdict": "not_reset",
-    "lastResetTweetId": "2065193272952422852",
+    "lastResetTweetId": "2065468501750649006",
     "radarWindowOpen": false,
     "radarStatus": "none",
     "radarAction": "wait",
@@ -20,7 +20,7 @@
     "radarModelIqStatus": "red",
     "radarModelIqScore": 75.0
   },
-  "checkedAt": 1781272320289,
+  "checkedAt": 1781282396010,
   "statusUrl": "https://hascodexratelimitreset.today/api/status",
   "radarUrl": "https://codexradar.com/current.json"
 }
