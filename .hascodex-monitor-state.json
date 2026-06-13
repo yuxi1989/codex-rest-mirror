@@ -13,14 +13,14 @@
     "radarPredictionLevel": "low",
     "radarProbability24hBucket": 0.1,
     "radarProbability48hBucket": 0.25,
-    "radarLatestWindow": "codex-speed-window-2026-06-04-codex",
-    "radarLatestWindowStatus": "closed",
-    "radarLatestWindowClosedAt": "2026-06-04T08:25:00+08:00",
-    "radarModelIqDate": "2026-06-12",
-    "radarModelIqStatus": "red",
-    "radarModelIqScore": 75.0
+    "radarLatestWindow": "||",
+    "radarLatestWindowStatus": null,
+    "radarLatestWindowClosedAt": null,
+    "radarModelIqDate": "2026-06-13",
+    "radarModelIqStatus": "yellow",
+    "radarModelIqScore": 87.5
   },
-  "checkedAt": 1781308422603,
+  "checkedAt": 1781318479204,
   "statusUrl": "https://hascodexratelimitreset.today/api/status",
   "radarUrl": "https://codexradar.com/current.json"
 }
