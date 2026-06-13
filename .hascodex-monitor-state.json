@@ -12,7 +12,7 @@
     "radarSourceUrl": "https://x.com/thsottiaux/status/2062329981548802523",
     "radarPredictionLevel": "low",
     "radarProbability24hBucket": 0.1,
-    "radarProbability48hBucket": 0.25,
+    "radarProbability48hBucket": 0.2,
     "radarLatestWindow": "||",
     "radarLatestWindowStatus": null,
     "radarLatestWindowClosedAt": null,
@@ -20,7 +20,7 @@
     "radarModelIqStatus": "yellow",
     "radarModelIqScore": 87.5
   },
-  "checkedAt": 1781318479204,
+  "checkedAt": 1781344012472,
   "statusUrl": "https://hascodexratelimitreset.today/api/status",
   "radarUrl": "https://codexradar.com/current.json"
 }
