@@ -142,8 +142,8 @@ Codex Radar 侧关注：
 
 默认行为：
 
-- 每 10 分钟运行一次。
-- 支持在 GitHub Actions 页面手动触发。
+- 当前已停止定时运行，不再自动每 10 分钟检查。
+- 保留手动触发入口，后续需要恢复时可在 GitHub Actions 页面手动启用。
 - 手动触发时可以把 `force_notify` 设为 `true`。
 - 自动提交 `.hascodex-monitor-state.json`，用于跨次运行去重。
 
